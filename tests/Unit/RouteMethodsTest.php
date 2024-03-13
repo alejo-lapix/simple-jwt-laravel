@@ -19,7 +19,7 @@ class RouteMethodsTest extends TestCase
         $action->addRoutes(new RoutesOptions(migration: []));
 
         $routes = $router->getRoutes()
-                         ->toCompiledRouteCollection($router $this->app);
+            ->toCompiledRouteCollection($router, $this->app);
 
         $this->assertNotEmpty($routes->getByName('token.session.create'));
         $this->assertNotEmpty($routes->getByName('token.create'));

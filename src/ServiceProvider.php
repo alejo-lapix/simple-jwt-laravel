@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+use Lapix\SimpleJWTLaravel\Console\Commands\CreateKeysCommand;
 use Lapix\SimpleJwt\ClaimsHandler;
 use Lapix\SimpleJwt\EdDSAKeys;
 use Lapix\SimpleJwt\JSONWebTokenProvider;
@@ -20,29 +21,16 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 
 class ServiceProvider extends LaravelServiceProvider
 {
-    public function boot(): void
-    {
-        Auth::extend('jwt', static function ($app, string $name, array $config): Guard {
-            $provider = Auth::createUserProvider($config['provider']);
-
-            if (empty($provider)) {
-                throw new Exception('User provider can\t be empty');
-            }
-
-            return new Guard(
-                $provider,
-                $app->get(ClaimsHandler::class),
-                $app->get(TokenProvider::class),
-                $app->get('request'),
-            );
-        });
-    }
-
     public function register(): void
     {
         $this->app->singleton(
             OpaqueTokenFactory::class,
             static fn () => new StringGenerator(),
+        );
+
+        $this->mergeConfigFrom(
+            __DIR__ . '/../config/jwt.php',
+            'simple-jwt',
         );
 
         $this->app->singleton(
@@ -53,17 +41,10 @@ class ServiceProvider extends LaravelServiceProvider
             ),
         );
 
-        $this->app->singleton(
-            SubjectRepository::class,
-            static fn ($app) => new EloquentSubjectRepository(
-                $app->get('config')->get('jwt.model'),
-            ),
-        );
-
         $this->app->singleton('jwt-keys', static function ($app): array {
             $config = $app->get('config');
-            $privateKey = $config->get('jwt.keys.0.private');
-            $publicKey = $config->get('jwt.keys.0.public');
+            $privateKey = $config->get('simple-jwt.keys.0.private');
+            $publicKey = $config->get('simple-jwt.keys.0.public');
 
             if (empty($privateKey) || empty($publicKey)) {
                 throw new Exception('JWT private and public keys can\'t be empty');
@@ -73,38 +54,93 @@ class ServiceProvider extends LaravelServiceProvider
                 new EdDSAKeys(
                     $publicKey,
                     $privateKey,
-                    $config->get('jwt.keys.0.id'),
+                    $config->get('simple-jwt.keys.0.id'),
                 ),
             ];
         });
 
         $this->app->scoped(TokenProvider::class, function ($app): TokenProvider {
             $config = $app->get('config');
-            $keys = $app->get('jwt-keys');
+            $ciphers = $app->get('jwt-keys');
 
             $provider = new JSONWebTokenProvider(
-                $keys,
-                $app[OpaqueTokenFactory::class],
-                $app[OpaqueTokenRepository::class],
-                $app[SubjectRepository::class],
-                $app[ClaimsHandler::class],
+                $ciphers,
+                $app->get(OpaqueTokenFactory::class),
+                $app->get(OpaqueTokenRepository::class),
+                $app->get(SubjectRepository::class),
+                $app->get(ClaimsHandler::class),
                 $this->getPSR14Adapter(),
                 $app->get('cache.store'),
             );
 
-            return $provider->issuer($config->get('app.url'))
-                ->timeToLive($config->get('jwt.ttl'))
-                ->availableKeys($config->get('jwt.use'))
-                ->audience($config->get('jwt.audience'))
-                ->leeway($config->get('jwt.leeway'))
-                ->refreshTokenTimeToLive($config->get('jwt.refresh_ttl'))
-                ->addExpiresInClaim($config->get('jwt.exi'));
+            return $provider->issuer($config->get('simple-jwt.issuer', $config->get('app.url')))
+                ->timeToLive($config->get('simple-jwt.ttl'))
+                ->availableKeys($config->get('simple-jwt.use'))
+                ->audience($config->get('simple-jwt.audience'))
+                ->leeway($config->get('simple-jwt.leeway'))
+                ->refreshTokenTimeToLive($config->get('simple-jwt.refresh_ttl'))
+                ->addExpiresInClaim($config->get('simple-jwt.exi'));
         });
 
         $this->app->singleton(JSONWebTokenProvider::class, function (): JSONWebTokenProvider {
             return $this->app->make(TokenProvider::class);
         });
+
+        // Add the JWT guard to the configuration.
+        $config = $this->app->get('config');
+        $config->set([
+            'auth.guards' => array_merge($config->get('auth.guards'), [
+                'jwt' => [
+                    'driver' => 'jwt',
+                    'provider' => $config->get('simple-jwt.guard.provider'),
+                ],
+            ]),
+        ]);
     }
+
+    public function boot(): void
+    {
+        $config = $this->app->get('config');
+        (new RouteMethods($this->app->get('router')))
+            ->addRoutes(
+                new RoutesOptions(
+                    migration: $config->get('simple-jwt.routes.migration', null),
+                    discovery: $config->get('simple-jwt.routes.discovery', null),
+                    authenticating: $config->get('simple-jwt.routes.authenticating', null),
+                    management: $config->get('simple-jwt.routes.management', null),
+                ),
+            );
+
+        Auth::extend('jwt', static function ($app, string $name, array $config): Guard {
+            $provider = Auth::createUserProvider($config['provider']);
+
+            if (empty($provider)) {
+                throw new Exception("User provider can't be empty");
+            }
+
+            return new Guard(
+                $provider,
+                $app->get(ClaimsHandler::class),
+                $app->get(TokenProvider::class),
+                $app->get('request'),
+            );
+        });
+
+        if ($this->app->runningInConsole()) {
+            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+            $this->publishes([
+                __DIR__ . '/../config/jwt.php' => config_path('simple-jwt.php'),
+            ], ['simple-jwt', 'simple-jwt-config']);
+
+            $this->publishes([
+                __DIR__ . '/../stubs/ServiceProvider.stub' => app_path('Providers/SimpleJWTServiceProvider.php'),
+            ], ['simple-jwt', 'simple-jwt-provider']);
+
+            $this->commands([CreateKeysCommand::class]);
+        }
+    }
+
 
     private function getPSR14Adapter(): EventDispatcherInterface
     {

@@ -1,3 +1,5 @@
 vendor
 tools/vendor
 .php-cs-fixer.cache
+.phpactor.json
+.phpunit.result.cache

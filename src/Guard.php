@@ -138,13 +138,11 @@ class Guard implements LocalGuard
     private function userFromCredentialsAndValidate(array $credentials = []): array
     {
         $user = $this->provider->retrieveByCredentials($credentials);
-
         if (empty($user)) {
             return [false, null];
         }
 
         // TODO Emit the 'Validate' event.
-
         $valid = $this->provider->validateCredentials($user, $credentials);
 
         return [$valid, $valid ? $user : null];

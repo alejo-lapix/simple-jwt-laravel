@@ -10,6 +10,7 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Lapix\SimpleJWTLaravel\Guard;
 use Lapix\SimpleJwt\AsymetricCipher;
 use Lapix\SimpleJwt\EllipticCurveAware;
 use Lapix\SimpleJwt\ExpiredRefreshToken;
@@ -22,7 +23,18 @@ use function time;
 
 class JWTController
 {
+    private array $updateCreateRules = [];
+
     public function __construct(private Application $app) {}
+
+    /**
+     * Add a new callback to update the validation rules before
+     * checking it against the incoming request.
+     */
+    public function addCreateRules(\Closure $cb): void
+    {
+        $this->updateCreateRules[] = $cb;
+    }
 
     /**
      * Creates a new JSON Web Token with the given credentials.
@@ -34,8 +46,8 @@ class JWTController
             'password' => 'required|string',
         ];
 
-        if (config('recaptcha.enabled')) {
-            $rules['captcha_token'] = 'required|recaptcha';
+        foreach ($this->updateCreateRules as $update) {
+            $rules = $update($rules);
         }
 
         $request->validate($rules);
@@ -90,7 +102,7 @@ class JWTController
         } catch (TokenError $e) {
             return $this->response()->json([
                 'error' => $e->getMessage(),
-            ]);
+            ], 498);
         }
 
         return $this->response()->noContent();
@@ -165,11 +177,13 @@ class JWTController
     private function getGuard(): Guard
     {
         $guard = $this->app->get('auth')->guard(
-            $this->app->get('config')->get('jwt.guard'),
+            $this->app->get('config')->get('simple-jwt.guard.name'),
         );
 
         if (! $guard instanceof Guard) {
-            throw new Exception('Expected a JWT Guard but got: ' . $guard::class);
+            throw new Exception(
+                sprintf('Expected a JWT Guard but got: "%s"', $guard::class),
+            );
         }
 
         return $guard;
