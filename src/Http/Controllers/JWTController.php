@@ -1,0 +1,182 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lapix\SimpleJWTLaravel\Http\Controllers;
+
+use Exception;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Lapix\SimpleJwt\AsymetricCipher;
+use Lapix\SimpleJwt\EllipticCurveAware;
+use Lapix\SimpleJwt\ExpiredRefreshToken;
+use Lapix\SimpleJwt\TokenError;
+use Lapix\SimpleJwt\TokenSet;
+
+use function array_map;
+use function config;
+use function time;
+
+class JWTController
+{
+    public function __construct(private Application $app) {}
+
+    /**
+     * Creates a new JSON Web Token with the given credentials.
+     */
+    public function create(Request $request): JsonResponse
+    {
+        $rules = [
+            'email' => 'required|string',
+            'password' => 'required|string',
+        ];
+
+        if (config('recaptcha.enabled')) {
+            $rules['captcha_token'] = 'required|recaptcha';
+        }
+
+        $request->validate($rules);
+
+        $guard = $this->getGuard();
+        $tokenSet = $guard->issueTokenWithCredentials($request->only('email', 'password'));
+
+        if (empty($tokenSet)) {
+            return $this->response()->json([
+                'email' => [
+                    $this->app->get('translator')->get('auth.failed'),
+                ],
+            ], 422);
+        }
+
+        return $this->presentTokenSet($tokenSet);
+    }
+
+    /**
+     * This method is useful for the migration process to the JWT
+     * usage, we'll create the token if the user is authenticated
+     * with any other token guard.
+     */
+    public function createTokenFromSession(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (empty($user)) {
+            throw new Exception('User is not authenticated');
+        }
+
+        $tokenSet = $this->getGuard()
+            ->setUser($user)
+            ->issueTokenForCurrentUser();
+
+        if (empty($tokenSet)) {
+            throw new Exception('Can\'t create the token set');
+        }
+
+        return $this->presentTokenSet($tokenSet);
+    }
+
+    /**
+     * Revoke refresh tokens, user need to authenticate again.
+     */
+    public function revoke(Request $request): JsonResponse|Response
+    {
+        $guard = $this->getGuard();
+
+        try {
+            $guard->revokeToken($request->input('token'));
+        } catch (TokenError $e) {
+            return $this->response()->json([
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->response()->noContent();
+    }
+
+    /**
+     * Created a new token set, user should provide a valid refresh token.
+     */
+    public function refresh(Request $request): JsonResponse
+    {
+        $tokenSet = null;
+        $guard = $this->getGuard();
+
+        try {
+            $tokenSet = $guard->refreshToken($request->input('token'));
+        } catch (ExpiredRefreshToken $e) {
+            // 440 IIS: Login time-out.
+            return $this->response()->json([
+                'message' => $e->getMessage(),
+            ], 440);
+        } catch (TokenError $e) {
+            return $this->response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        return $this->presentTokenSet($tokenSet);
+    }
+
+    /**
+     * Show the tokens used to sign the JWT.
+     */
+    public function keys(): JsonResponse
+    {
+        $keys = array_map(
+            static function (AsymetricCipher $cipher): array {
+                $key = [
+                    'kty' => $cipher->getType(),
+                    'alg' => $cipher->getName(),
+                    'x' => $cipher->getPublicKey(),
+                    'kid' => $cipher->getID(),
+                ];
+
+                if ($cipher instanceof EllipticCurveAware) {
+                    $key['crv'] = $cipher->getEllipticCurveName();
+                }
+
+                return $key;
+            },
+            $this->app->get('jwt-keys'),
+        );
+
+        return $this->response()
+            ->json(['keys' => $keys]);
+    }
+
+    private function presentTokenSet(TokenSet $tokenSet): JsonResponse
+    {
+        return $this->response()->json([
+            'access_token' => [
+                'type' => 'Bearer',
+                'token' => $tokenSet->getJWT()->getToken(),
+                'expires_in' => $tokenSet->getJWT()->exi,
+            ],
+            'refresh_token' => [
+                'token' => $tokenSet->getRefreshToken()->getToken(),
+                'expires_in' => $tokenSet->getRefreshToken()->expiresAt - time(),
+            ],
+        ]);
+    }
+
+    private function getGuard(): Guard
+    {
+        $guard = $this->app->get('auth')->guard(
+            $this->app->get('config')->get('jwt.guard'),
+        );
+
+        if (! $guard instanceof Guard) {
+            throw new Exception('Expected a JWT Guard but got: ' . $guard::class);
+        }
+
+        return $guard;
+    }
+
+    private function response(): ResponseFactory
+    {
+        return $this->app->get(ResponseFactory::class);
+    }
+}

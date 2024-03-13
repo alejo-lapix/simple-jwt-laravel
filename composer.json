@@ -1,0 +1,29 @@
+{
+    "name": "lapix/simple-jwt-laravel",
+    "description": "Package to handling the JWT Authentication with Laravel and SimplJWT",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Lapix\\SimpleJWTLaravel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Alejandro Rivera",
+            "email": "alejo@lapix.com.co"
+        }
+    ],
+    "require": {
+        "lapix/simple-jwt": "^0.3.0",
+        "laravel/framework": "^10.47"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "orchestra/testbench": "^8.21"
+    }
+}

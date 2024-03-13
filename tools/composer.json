@@ -1,0 +1,19 @@
+{
+    "name": "graphql/tools",
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.37",
+        "phpmd/phpmd": "@stable",
+        "phpstan/phpstan": "^1.10",
+        "larastan/larastan": "^2.8"
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        }
+    },
+    "require": {
+        "maglnet/composer-require-checker": "^4.7",
+        "ergebnis/composer-normalize": "^2.39",
+        "mi-schi/phpmd-extension": "^4.3"
+    }
+}
