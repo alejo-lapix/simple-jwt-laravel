@@ -73,7 +73,7 @@ class ServiceProvider extends LaravelServiceProvider
                 $app->get('cache.store'),
             );
 
-            return $provider->issuer($config->get('simple-jwt.issuer', $config->get('app.url')))
+            return $provider->issuer($config->get('simple-jwt.issuer') ?: $config->get('app.url'))
                 ->timeToLive($config->get('simple-jwt.ttl'))
                 ->availableKeys($config->get('simple-jwt.use'))
                 ->audience($config->get('simple-jwt.audience'))
