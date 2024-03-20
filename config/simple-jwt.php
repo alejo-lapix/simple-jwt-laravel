@@ -31,11 +31,4 @@ return [
             'id' => env('JWT_IDS'),
         ],
     ],
-
-    'routes' => [
-        'migration' => null,
-        'discovery' => null,
-        'authenticating' => null,
-        'management' => null,
-    ],
 ];

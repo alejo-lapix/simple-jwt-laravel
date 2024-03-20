@@ -100,17 +100,6 @@ class ServiceProvider extends LaravelServiceProvider
 
     public function boot(): void
     {
-        $config = $this->app->get('config');
-        (new RouteMethods($this->app->get('router')))
-            ->addRoutes(
-                new RoutesOptions(
-                    migration: $config->get('simple-jwt.routes.migration', null),
-                    discovery: $config->get('simple-jwt.routes.discovery', null),
-                    authenticating: $config->get('simple-jwt.routes.authenticating', null),
-                    management: $config->get('simple-jwt.routes.management', null),
-                ),
-            );
-
         Auth::extend('jwt', static function ($app, string $name, array $config): Guard {
             $provider = Auth::createUserProvider($config['provider']);
 
@@ -126,26 +115,30 @@ class ServiceProvider extends LaravelServiceProvider
             );
         });
 
-        if ($this->app->runningInConsole()) {
-            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-
-            $this->publishes([
-                __DIR__ . '/../config/jwt.php' => config_path('simple-jwt.php'),
-            ], ['simple-jwt', 'simple-jwt-config']);
-
-            $this->publishes([
-                __DIR__ . '/../stubs/ServiceProvider.stub' => app_path('Providers/SimpleJWTServiceProvider.php'),
-            ], ['simple-jwt', 'simple-jwt-provider']);
-
-            $this->commands([CreateKeysCommand::class]);
+        if (!$this->app->runningInConsole()) {
+            return;
         }
+
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        $this->publishes([
+            __DIR__ . '/../config/simple-jwt.php' => config_path('simple-jwt.php'),
+        ], ['simple-jwt', 'simple-jwt-config']);
+
+        $this->publishes([
+            __DIR__ . '/../stubs/ServiceProvider.stub' => app_path('Providers/SimpleJWTServiceProvider.php'),
+        ], ['simple-jwt', 'simple-jwt-provider']);
+
+        $this->commands([CreateKeysCommand::class]);
     }
 
 
     private function getPSR14Adapter(): EventDispatcherInterface
     {
-        return new class($this->app) implements EventDispatcherInterface {
-            public function __construct(private Application $app) {}
+        return new class ($this->app) implements EventDispatcherInterface {
+            public function __construct(private Application $app)
+            {
+            }
 
             public function dispatch(object $event): object
             {
