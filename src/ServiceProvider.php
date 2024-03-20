@@ -29,7 +29,7 @@ class ServiceProvider extends LaravelServiceProvider
         );
 
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/jwt.php',
+            __DIR__ . '/../config/simple-jwt.php',
             'simple-jwt',
         );
 
