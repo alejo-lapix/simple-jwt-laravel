@@ -4,7 +4,7 @@ namespace Lapix\SimpleJWTLaravel;
 
 class Router
 {
-    public function __construct(private mixed $app)
+    public function __construct(private \Psr\Container\ContainerInterface $app)
     {
     }
 

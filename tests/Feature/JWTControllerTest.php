@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Lapix\SimpleJWTLaravel\RoutesOptions;
 use Lapix\SimpleJWTLaravel\ServiceProvider;
 use Lapix\SimpleJwt\JSONWebToken;
 use Lapix\SimpleJwt\ClaimsHandler;
@@ -40,10 +41,6 @@ class JWTControllerTest extends TestCase
                         'private' => '40nq/t9uWQlU0X+pKJKmXVDDYNyk4qv7hcfez22nMCOqd9y3yrYTU9/w9T/r28vSOg0tS9fJj/fiGNXo6UxtrQ==',
                         'id' => '101',
                     ],
-                ],
-                'routes' => [
-                    'migration' => [],
-                    'management' => [],
                 ],
             ])
         ]);
@@ -85,6 +82,12 @@ class JWTControllerTest extends TestCase
 
         $this->app->get(JSONWebTokenProvider::class)
             ->setTestTimestamp(null);
+
+        $this->app->get(\Lapix\SimpleJWTLaravel\Router::class)
+            ->routes(new RoutesOptions(
+                migration: [],
+                management: [],
+            ));
     }
 
     public function testCreateToken(): void
