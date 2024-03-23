@@ -89,16 +89,42 @@ class Guard implements LocalGuard
     /** @param array{email?: string, password?: string, token?: string} $credentials */
     public function issueTokenWithCredentials(array $credentials): ?TokenSet
     {
+        [, $set] = $this->getUserAndTokenSet($credentials);
+        return $set;
+    }
+
+    /** @param array{email?: string, password?: string, token?: string} $credentials */
+    public function issueTokenWithCredentialsAndAuthenticate(array $credentials): ?TokenSet
+    {
+        [$user, $set] = $this->getUserAndTokenSet($credentials);
+
+        if (empty($user)) {
+            $this->forgetUser();
+            return null;
+        }
+
+        // Setting the user in the 'Guard' streamlines the process of retrieving the
+        // authenticated user, eliminating the need for decoding the generated token.
+        $this->setUser($user);
+
+        return $set;
+    }
+
+    /** @return array{0: Authenticatable|null, 1: TokenSet|null} */
+    private function getUserAndTokenSet(array $credentials): array
+    {
         // TODO Emit the 'Attempt' event.
         [$valid, $user] = $this->userFromCredentialsAndValidate($credentials);
-
         if (! $valid || empty($user)) {
-            return null;
+            return [null, null];
         }
 
         event(new Login('jwt', $user, remember: false));
 
-        return $this->tokenProvider->create($user);
+        return [
+            $user,
+            $this->tokenProvider->create($user),
+        ];
     }
 
     public function issueTokenForCurrentUser(): ?TokenSet

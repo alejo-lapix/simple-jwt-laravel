@@ -90,6 +90,19 @@ class JWTControllerTest extends TestCase
             ));
     }
 
+    public function testFailsToCreateAToken(): void
+    {
+        $this->handleValidationExceptions();
+        $this->post(route('token.create'), [
+            'email' => 'invalid-user',
+            'password' => 'password',
+        ], ['accept' => 'application/json'])
+            ->assertStatus(422)
+            ->assertJson([
+                'email' => [ 'These credentials do not match our records.' ],
+            ]);
+    }
+
     public function testCreateToken(): void
     {
         $user = UserFactory::new()->create();
