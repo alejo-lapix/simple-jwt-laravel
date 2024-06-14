@@ -31,8 +31,6 @@ class EloquentOpaqueTokenRepository implements OpaqueTokenRepository
         return new OpaqueToken($row->token, [
             'subject' => (string) $row->owner_id,
             'expiresAt' => strtotime($row->expires_at),
-            'createdAt' => strtotime($row->created_at),
-            'updatedAt' => strtotime($row->updated_at),
         ]);
     }
 
@@ -43,8 +41,6 @@ class EloquentOpaqueTokenRepository implements OpaqueTokenRepository
                 'token' => $token->getToken(),
                 'owner_id' => $token->subject,
                 'expires_at' => date('Y-m-d H:i:s', $token->expiresAt),
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
             ]);
     }
 
