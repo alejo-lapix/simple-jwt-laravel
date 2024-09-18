@@ -29,7 +29,7 @@
         }
     ],
     "require": {
-        "lapix/simple-jwt": "^1.1",
+        "lapix/simple-jwt": "^2.0",
         "laravel/framework": "^10.0|^11.0"
     },
     "require-dev": {
