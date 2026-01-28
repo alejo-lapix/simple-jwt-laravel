@@ -10,6 +10,8 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Queue;
+use Lapix\SimpleJWTLaravel\DeleteQueueToken;
 use Lapix\SimpleJWTLaravel\RoutesOptions;
 use Lapix\SimpleJWTLaravel\ServiceProvider;
 use Lapix\SimpleJwt\JSONWebToken;
@@ -32,6 +34,8 @@ class JWTControllerTest extends TestCase
     protected function defineEnvironment($app)
     {
         $app->get('config')->set([
+            // Show the internal server errors info.
+            // 'app' => ['debug' => true],
             'simple-jwt' => array_merge($app->config->get('simple-jwt'), [
                 'guard' => ['name' => 'jwt'],
                 'issuer' => 'https://lab.lapix.com.co',
@@ -214,6 +218,8 @@ class JWTControllerTest extends TestCase
 
     public function testWhileRevokingOnlyTheRefreshTokenIsChecked(): void
     {
+        Queue::fake();
+
         $tokenProvider = $this->app->get(JSONWebTokenProvider::class)
             ->setTestTimestamp(1)
             ->timeToLive('31 days');
@@ -227,6 +233,8 @@ class JWTControllerTest extends TestCase
             ['Authorization' => 'Bearer ' . $set->getJWT()->getToken()],
         )
             ->assertStatus(204);
+
+        Queue::assertPushed(DeleteQueueToken::class);
     }
 
     public function testInvalidRefreshTokenThrowsError(): void
@@ -234,12 +242,12 @@ class JWTControllerTest extends TestCase
         $user = UserFactory::new()->create();
         $set = $this->app->get(TokenProvider::class)->create($user);
 
-        $this->post(
+        $this->json(
+            'POST',
             route('token.refresh'),
             ['token' => 'invalid-refresh-token'],
             ['Authorization' => 'Bearer ' . $set->getJWT()->getToken()],
         )
             ->assertStatus(400);
     }
-
 }

@@ -10,6 +10,7 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Lapix\SimpleJWTLaravel\Guard;
 use Lapix\SimpleJwt\AsymetricCipher;
 use Lapix\SimpleJwt\EllipticCurveAware;
@@ -114,10 +115,11 @@ class JWTController
     public function refresh(Request $request): JsonResponse
     {
         $tokenSet = null;
-        $guard = $this->getGuard();
 
         try {
-            $tokenSet = $guard->refreshToken($request->input('token'));
+            // First, lock the current 
+            $tokenSet = $this->atomicRefresh($request->token);
+
         } catch (ExpiredRefreshToken $e) {
             // 440 IIS: Login time-out.
             return $this->response()->json([
@@ -192,5 +194,47 @@ class JWTController
     private function response(): ResponseFactory
     {
         return $this->app->get(ResponseFactory::class);
+    }
+
+    private function atomicRefresh(string $token): TokenSet
+    {
+        $tokenSet = null;
+        $guard = $this->getGuard();
+
+        $lockKey = 'lock_jwt_refresh:' . $token;
+        $cacheKey = 'cache_jwt_refresh:' . $token;
+
+        $lock = Cache::lock($lockKey, seconds: 10);
+
+        try {
+            if ($lock->get()) {
+                $tokenSet = $guard->refreshToken($token);
+                Cache::put($cacheKey, $tokenSet, ttl: 10);
+
+                return $tokenSet;
+            }
+
+            // Wait for one second to get the token set.
+            for ($i = 0; $i < 10; $i++) {
+                usleep(1000 * 100);
+
+                $tokenSet = Cache::get($cacheKey);
+                if (! empty($tokenSet)) {
+                    return $tokenSet;
+                }
+
+                if ($lock->get()) {
+                    $tokenSet = $guard->refreshToken($token);
+                    Cache::put($cacheKey, $tokenSet, ttl: 10);
+                    return $tokenSet;
+                }
+            }
+
+            // The server is having troubles, just failed to create or retrieve the JWT.
+            throw new \Exception('Timeout waiting to the the refresh token');
+
+        } finally {
+            $lock->release();
+        }
     }
 }

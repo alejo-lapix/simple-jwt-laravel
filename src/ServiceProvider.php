@@ -34,11 +34,20 @@ class ServiceProvider extends LaravelServiceProvider
         );
 
         $this->app->singleton(
-            OpaqueTokenRepository::class,
+            EloquentOpaqueTokenRepository::class,
             static fn ($app) => new EloquentOpaqueTokenRepository(
                 $app->make('db')->connection(),
                 'jwt_opaque_tokens',
             ),
+        );
+
+        $this->app->when(QueueDeletionOpaqueTokenRepository::class)
+            ->needs(OpaqueTokenRepository::class)
+            ->give(fn () => $this->app->make(EloquentOpaqueTokenRepository::class));
+
+        $this->app->singleton(
+            OpaqueTokenRepository::class,
+            fn () => $this->app->make(QueueDeletionOpaqueTokenRepository::class),
         );
 
         $this->app->singleton('jwt-keys', static function ($app): array {

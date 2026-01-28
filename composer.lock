@@ -792,16 +792,16 @@
         },
         {
             "name": "lapix/simple-jwt",
-            "version": "v2.0.1",
+            "version": "v2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lapix-com-co/simple-jwt.git",
-                "reference": "7df22e1803539e741c94ff68d73ef6133927979e"
+                "reference": "89287796790014fe74a3a6d16bd2e7fb51f2ab87"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lapix-com-co/simple-jwt/zipball/7df22e1803539e741c94ff68d73ef6133927979e",
-                "reference": "7df22e1803539e741c94ff68d73ef6133927979e",
+                "url": "https://api.github.com/repos/lapix-com-co/simple-jwt/zipball/89287796790014fe74a3a6d16bd2e7fb51f2ab87",
+                "reference": "89287796790014fe74a3a6d16bd2e7fb51f2ab87",
                 "shasum": ""
             },
             "require": {
@@ -836,9 +836,9 @@
             ],
             "support": {
                 "issues": "https://github.com/lapix-com-co/simple-jwt/issues",
-                "source": "https://github.com/lapix-com-co/simple-jwt/tree/v2.0.1"
+                "source": "https://github.com/lapix-com-co/simple-jwt/tree/v2.1.0"
             },
-            "time": "2026-01-28T21:45:30+00:00"
+            "time": "2026-01-28T22:06:09+00:00"
         },
         {
             "name": "laravel/framework",
