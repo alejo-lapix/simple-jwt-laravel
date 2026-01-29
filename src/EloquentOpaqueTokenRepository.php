@@ -31,16 +31,24 @@ class EloquentOpaqueTokenRepository implements OpaqueTokenRepository
         return new OpaqueToken($row->token, [
             'subject' => (string) $row->owner_id,
             'expiresAt' => strtotime($row->expires_at),
+            'additional' => $row->additional === null
+                ? null
+                : json_decode($row->additional, associative: true),
         ]);
     }
 
     public function create(OpaqueToken $token): void
     {
+        $props = $token->getProperties()['additional'] ?? null;
+
         $this->connection->table($this->table)
             ->insert([
                 'token' => $token->getToken(),
                 'owner_id' => $token->subject,
                 'expires_at' => date('Y-m-d H:i:s', $token->expiresAt),
+                'additional' => $props === null
+                    ? null
+                    : json_encode($props),
             ]);
     }
 

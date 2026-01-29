@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Firebase\JWT\JWT;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Foundation\Auth\User;
@@ -197,6 +198,25 @@ class JWTControllerTest extends TestCase
             ->assertStatus(200);
     }
 
+    public function testAppendPropertiesToTheToken(): void
+    {
+        $user = UserFactory::new()->create();
+        $tokenProvider = $this->app->get(TokenProvider::class);
+        $set = $tokenProvider->create($user, [
+            'scope' => 'test-only',
+        ]);
+
+        $json = $this->post(
+            route('token.refresh'),
+            ['token' => $set->getRefreshToken()->getToken()],
+        )
+            ->assertStatus(200)
+            ->json();
+
+        $payload = $this->getJWTPayload($json['access_token']['token']);
+        $this->assertEquals('test-only', $payload->scope);
+    }
+
     /**
      * The refresh token and the JWT are not valid anymore after the
      * revoke process.
@@ -249,5 +269,12 @@ class JWTControllerTest extends TestCase
             ['Authorization' => 'Bearer ' . $set->getJWT()->getToken()],
         )
             ->assertStatus(400);
+    }
+
+    private function getJWTPayload(string $token): \stdclass
+    {
+        [, $bodyb64] = explode('.', $token);
+        $payloadRaw = JWT::urlsafeB64Decode($bodyb64);
+        return JWT::jsonDecode($payloadRaw);
     }
 }
