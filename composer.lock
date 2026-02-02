@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "effcabe5636237a6c89fb0a6074e6aa0",
+    "content-hash": "fcbac2191eef33dfd9a51edd3ff10ff5",
     "packages": [
         {
             "name": "brick/math",
@@ -792,22 +792,22 @@
         },
         {
             "name": "lapix/simple-jwt",
-            "version": "v3.0.4",
+            "version": "v4.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lapix-com-co/simple-jwt.git",
-                "reference": "df434da5ec10b07657fb4423f194a5462b7b39d0"
+                "reference": "da8e233cc80b6069821c74b448a1920c5a7b35e1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lapix-com-co/simple-jwt/zipball/df434da5ec10b07657fb4423f194a5462b7b39d0",
-                "reference": "df434da5ec10b07657fb4423f194a5462b7b39d0",
+                "url": "https://api.github.com/repos/lapix-com-co/simple-jwt/zipball/da8e233cc80b6069821c74b448a1920c5a7b35e1",
+                "reference": "da8e233cc80b6069821c74b448a1920c5a7b35e1",
                 "shasum": ""
             },
             "require": {
                 "firebase/php-jwt": "^7.0",
                 "paragonie/sodium_compat": "^1.17",
-                "php": ">=8.0",
+                "php": ">=8.5",
                 "psr/event-dispatcher": "*",
                 "psr/simple-cache": "*"
             },
@@ -836,9 +836,9 @@
             ],
             "support": {
                 "issues": "https://github.com/lapix-com-co/simple-jwt/issues",
-                "source": "https://github.com/lapix-com-co/simple-jwt/tree/v3.0.4"
+                "source": "https://github.com/lapix-com-co/simple-jwt/tree/v4.0.0"
             },
-            "time": "2026-01-29T00:51:05+00:00"
+            "time": "2026-02-02T21:22:40+00:00"
         },
         {
             "name": "laravel/framework",
@@ -5326,16 +5326,16 @@
         },
         {
             "name": "doctrine/event-manager",
-            "version": "2.1.0",
+            "version": "2.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/event-manager.git",
-                "reference": "c07799fcf5ad362050960a0fd068dded40b1e312"
+                "reference": "dda33921b198841ca8dbad2eaa5d4d34769d18cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/event-manager/zipball/c07799fcf5ad362050960a0fd068dded40b1e312",
-                "reference": "c07799fcf5ad362050960a0fd068dded40b1e312",
+                "url": "https://api.github.com/repos/doctrine/event-manager/zipball/dda33921b198841ca8dbad2eaa5d4d34769d18cf",
+                "reference": "dda33921b198841ca8dbad2eaa5d4d34769d18cf",
                 "shasum": ""
             },
             "require": {
@@ -5397,7 +5397,7 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/event-manager/issues",
-                "source": "https://github.com/doctrine/event-manager/tree/2.1.0"
+                "source": "https://github.com/doctrine/event-manager/tree/2.1.1"
             },
             "funding": [
                 {
@@ -5413,7 +5413,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-01-17T22:40:21+00:00"
+            "time": "2026-01-29T07:11:08+00:00"
         },
         {
             "name": "fakerphp/faker",
@@ -6983,16 +6983,16 @@
         },
         {
             "name": "psy/psysh",
-            "version": "v0.12.18",
+            "version": "v0.12.19",
             "source": {
                 "type": "git",
                 "url": "https://github.com/bobthecow/psysh.git",
-                "reference": "ddff0ac01beddc251786fe70367cd8bbdb258196"
+                "reference": "a4f766e5c5b6773d8399711019bb7d90875a50ee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bobthecow/psysh/zipball/ddff0ac01beddc251786fe70367cd8bbdb258196",
-                "reference": "ddff0ac01beddc251786fe70367cd8bbdb258196",
+                "url": "https://api.github.com/repos/bobthecow/psysh/zipball/a4f766e5c5b6773d8399711019bb7d90875a50ee",
+                "reference": "a4f766e5c5b6773d8399711019bb7d90875a50ee",
                 "shasum": ""
             },
             "require": {
@@ -7056,9 +7056,9 @@
             ],
             "support": {
                 "issues": "https://github.com/bobthecow/psysh/issues",
-                "source": "https://github.com/bobthecow/psysh/tree/v0.12.18"
+                "source": "https://github.com/bobthecow/psysh/tree/v0.12.19"
             },
-            "time": "2025-12-17T14:35:46+00:00"
+            "time": "2026-01-30T17:33:13+00:00"
         },
         {
             "name": "sebastian/cli-parser",
