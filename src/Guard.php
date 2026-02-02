@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Lapix\SimpleJwt\ClaimsHandler;
 use Lapix\SimpleJwt\ExpiredJSONWebToken;
+use Lapix\SimpleJwt\JSONWebToken;
 use Lapix\SimpleJwt\TokenError;
 use Lapix\SimpleJwt\TokenProvider;
 use Lapix\SimpleJwt\TokenSet;
@@ -30,6 +31,10 @@ class Guard implements LocalGuard
     // 498 Esri: Invalid token.
     private static int $refreshStatusCode = 498;
 
+    private ?Authenticatable $lastValidated = null;
+
+    private ?JSONWebToken $jwt = null;
+
     public function __construct(
         UserProvider $provider,
         private ClaimsHandler $claimsHandler,
@@ -43,7 +48,6 @@ class Guard implements LocalGuard
 
     public function user()
     {
-        $jwt = null;
         $subject = null;
 
         if (! empty($this->user)) {
@@ -57,8 +61,8 @@ class Guard implements LocalGuard
         }
 
         try {
-            $jwt = $this->tokenProvider->decode($token);
-            $subject = $this->claimsHandler->unpack($jwt);
+            $this->jwt = $this->tokenProvider->decode($token);
+            $subject = $this->claimsHandler->unpack($this->jwt);
         } catch (ExpiredJSONWebToken $e) {
             throw new HttpException(self::$refreshStatusCode, $e->getMessage());
         } catch (TokenError $e) {
@@ -151,7 +155,9 @@ class Guard implements LocalGuard
      */
     public function validate(array $credentials = [])
     {
-        [$valid] = $this->userFromCredentialsAndValidate($credentials);
+        [$valid, $user] = $this->userFromCredentialsAndValidate($credentials);
+
+        $this->lastValidated = $user;
 
         return $valid;
     }
@@ -201,5 +207,15 @@ class Guard implements LocalGuard
         }
 
         return null;
+    }
+
+    public function getLastValidated(): Authenticatable
+    {
+        return $this->lastValidated;
+    }
+
+    public function jwt(): ?JSONWebToken
+    {
+        return $this->jwt;
     }
 }
