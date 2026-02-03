@@ -13,12 +13,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jwt_opaque_tokens', static function (Blueprint $table): void {
-            $table->id();
-            $table->string('token')->index();
-            $table->string('owner_id')->index();
+        Schema::create('jwt_opaque_tokens', function (Blueprint $table) {
+            $table->string('token', 57)->index();
+            $table->string('owner_id', 11)->index();
             $table->dateTime('expires_at');
-            $table->timestamps();
+            $table->json('additional')->nullable();
+
+            $table->index(['token', 'owner_id', 'expires_at']);
+            $table->primary(['token']);
         });
     }
 
