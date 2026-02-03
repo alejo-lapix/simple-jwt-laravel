@@ -128,7 +128,9 @@ class ServiceProvider extends LaravelServiceProvider
             return;
         }
 
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->publishes([
+            __DIR__ . '/../database/migrations/' => database_path('migrations'),
+        ], ['simple-jwt', 'simple-jwt-migrations']);
 
         $this->publishes([
             __DIR__ . '/../config/simple-jwt.php' => config_path('simple-jwt.php'),
